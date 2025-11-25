@@ -1,0 +1,5 @@
+{
+  "name": "SentinelPay",
+  "description": "A mobile-first fintech dashboard for real-time payments, wallet management, and fraud detection analytics.",
+  "requestFramePermissions": []
+}
