@@ -25,19 +25,25 @@ export const useFraudStore = create<FraudState>((set) => ({
       });
     } catch (err) {
       console.error("Failed to load fraud data", err);
+      // Set defaults if API fails
+      set({
+        alerts: [],
+        riskScore: { score: 0, level: 'safe', trend: 'stable' },
+        device: { deviceId: 'unknown', model: 'Unknown', ip: '0.0.0.0', risk: 'low' }
+      });
     } finally {
       set({ isLoading: false });
     }
   },
 
   explainRisk: async () => {
-    // Only fetch if we don't have it (or force refresh)
     set({ isLoading: true });
     try {
       const res = await api.post('/fraud/explain');
       set({ explanation: res.data.explanation });
     } catch (err) {
-      console.error(err);
+      console.error("Failed to get explanation", err);
+      set({ explanation: "Unable to generate explanation. Please try again later." });
     } finally {
       set({ isLoading: false });
     }

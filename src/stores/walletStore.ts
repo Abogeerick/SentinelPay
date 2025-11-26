@@ -2,7 +2,12 @@ import { create } from 'zustand';
 import api from '../services/api';
 import { WalletState } from '../types';
 
-export const useWalletStore = create<WalletState>((set, get) => ({
+interface ExtendedWalletState extends WalletState {
+  deposit: (amount: number) => Promise<void>;
+  withdraw: (amount: number) => Promise<void>;
+}
+
+export const useWalletStore = create<ExtendedWalletState>((set, get) => ({
   balance: 0,
   transactions: [],
   isLoading: false,
@@ -12,7 +17,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       const res = await api.get('/wallet/balance');
       set({ balance: res.data.balance });
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load balance", err);
     }
   },
 
@@ -22,7 +27,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       const res = await api.get('/wallet/transactions');
       set({ transactions: res.data });
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load transactions", err);
     } finally {
       set({ isLoading: false });
     }
@@ -36,7 +41,36 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       await get().loadBalance();
       await get().loadTransactions();
     } catch (err) {
-      console.error(err);
+      console.error("Transfer failed", err);
+      throw err;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  deposit: async (amount) => {
+    set({ isLoading: true });
+    try {
+      await api.post('/wallet/deposit', { amount });
+      await get().loadBalance();
+      await get().loadTransactions();
+    } catch (err) {
+      console.error("Deposit failed", err);
+      throw err;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  withdraw: async (amount) => {
+    set({ isLoading: true });
+    try {
+      await api.post('/wallet/withdraw', { amount });
+      await get().loadBalance();
+      await get().loadTransactions();
+    } catch (err) {
+      console.error("Withdrawal failed", err);
+      throw err;
     } finally {
       set({ isLoading: false });
     }
