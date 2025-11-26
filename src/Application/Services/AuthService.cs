@@ -90,11 +90,13 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, string? ipAddress, string? deviceFingerprint)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-        if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+        try
         {
-            throw new UnauthorizedAccessException("Invalid email or password");
-        }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+            {
+                throw new UnauthorizedAccessException("Invalid email or password");
+            }
 
         // Update last login info
         user.LastLoginIp = ipAddress;
@@ -117,6 +119,17 @@ public class AuthService : IAuthService
             ExpiresAt = DateTime.UtcNow.AddMinutes(60),
             User = MapToUserDto(user)
         };
+        }
+        catch (Npgsql.PostgresException ex)
+        {
+            _logger.LogError(ex, "Database error during login: {Message}", ex.Message);
+            throw new InvalidOperationException($"Database connection error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during login: {Message}", ex.Message);
+            throw;
+        }
     }
 
     public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)

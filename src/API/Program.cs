@@ -78,27 +78,10 @@ Log.Information("Database connection string configured. Host: {Host}",
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Redis Configuration
-var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-if (!string.IsNullOrEmpty(redisConnectionString))
-{
-    try
-    {
-        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-            ConnectionMultiplexer.Connect(redisConnectionString));
-        builder.Services.AddScoped<IRedisService, RedisService>();
-    }
-    catch (Exception ex)
-    {
-        Log.Warning(ex, "Failed to connect to Redis. Using in-memory fallback.");
-        builder.Services.AddSingleton<IRedisService, InMemoryRedisService>();
-    }
-}
-else
-{
-    Log.Warning("Redis connection string not found. Using in-memory fallback.");
-    builder.Services.AddSingleton<IRedisService, InMemoryRedisService>();
-}
+// Redis Configuration - Always use in-memory fallback for now (Redis is optional)
+// In production, you can add a Redis service (like Upstash, Redis Cloud, etc.)
+Log.Information("Using in-memory Redis service (Redis is optional and not required)");
+builder.Services.AddSingleton<IRedisService, InMemoryRedisService>();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"];
