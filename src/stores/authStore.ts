@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '../services/api';
-import { AuthState, User } from '../types';
+import { AuthState } from '../types';
 
 interface ExtendedAuthState extends AuthState {
   register: (email: string, password: string, name?: string) => Promise<void>;

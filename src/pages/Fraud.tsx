@@ -139,37 +139,6 @@ const Fraud: React.FC = () => {
                             dataKey="size"
                             aspectRatio={4 / 3}
                             stroke={isDarkMode ? '#0f172a' : '#fff'}
-                            content={(props: any) => {
-                                const { x, y, width, height, name, fill } = props;
-                                return (
-                                  <g>
-                                    <rect
-                                      x={x}
-                                      y={y}
-                                      width={width}
-                                      height={height}
-                                      style={{
-                                        fill: fill,
-                                        stroke: isDarkMode ? '#1e293b' : '#fff',
-                                        strokeWidth: 2,
-                                        strokeOpacity: 1,
-                                      }}
-                                    />
-                                    {width > 50 && height > 30 && (
-                                        <text
-                                            x={x + width / 2}
-                                            y={y + height / 2}
-                                            textAnchor="middle"
-                                            fill="#fff"
-                                            fontSize={12}
-                                            fontWeight={600}
-                                        >
-                                            {name}
-                                        </text>
-                                    )}
-                                  </g>
-                                );
-                            }}
                         >
                             <Tooltip contentStyle={tooltipStyle} />
                         </Treemap>
