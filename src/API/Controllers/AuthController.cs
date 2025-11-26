@@ -1,8 +1,11 @@
+using System.Security.Claims;
 using FalconPay.FraudShield.Application.Interfaces;
+using FalconPay.FraudShield.Infrastructure.Data;
 using FalconPay.FraudShield.Shared.DTOs.Auth;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FalconPay.FraudShield.API.Controllers;
 
@@ -11,11 +14,13 @@ namespace FalconPay.FraudShield.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly ApplicationDbContext _context;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(IAuthService authService, ApplicationDbContext context, ILogger<AuthController> logger)
     {
         _authService = authService;
+        _context = context;
         _logger = logger;
     }
 
@@ -80,6 +85,32 @@ public class AuthController : ControllerBase
             _logger.LogError(ex, "Error during token refresh");
             return StatusCode(500, new { message = "An error occurred during token refresh" });
         }
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<UserDto>> GetCurrentUser()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { message = "User not found" });
+        }
+
+        return Ok(new UserDto
+        {
+            Id = user.Id.ToString(),
+            Name = user.Name ?? user.Email.Split('@')[0],
+            Email = user.Email,
+            Avatar = user.Avatar ?? $"https://api.dicebear.com/7.x/avataaars/svg?seed={user.Email}",
+            Phone = user.Phone
+        });
     }
 
     [HttpGet("test")]

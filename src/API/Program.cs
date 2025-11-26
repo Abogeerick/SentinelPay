@@ -129,6 +129,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IFraudService, FraudService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -167,10 +170,17 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Ensure database is created (for development only)
-using (var scope = app.Services.CreateScope())
+try
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.EnsureCreated();
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.EnsureCreated();
+    }
+}
+catch (Exception ex)
+{
+    Log.Warning(ex, "Could not connect to database. Make sure your connection string is correct.");
 }
 
 Log.Information("FalconPay FraudShield API starting...");
