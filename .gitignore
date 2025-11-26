@@ -38,6 +38,11 @@ node_modules/
 dist/
 build/
 
+## Environment files (keep .env.example and .env.production)
+.env
+.env.local
+.env.*.local
+
 ## IDE
 .idea/
 *.swp
