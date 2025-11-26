@@ -68,8 +68,12 @@ builder.Services.AddSwaggerGen(c =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
 {
+    Log.Error("Connection string 'DefaultConnection' not found in configuration.");
     throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 }
+
+Log.Information("Database connection string configured. Host: {Host}", 
+    connectionString.Contains("Host=") ? connectionString.Split("Host=")[1].Split(";")[0] : "Unknown");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -177,6 +181,18 @@ if (enableSwagger)
     });
 }
 
+// Root endpoint
+app.MapGet("/", () => Results.Ok(new { 
+    message = "FalconPay FraudShield API",
+    version = "1.0.0",
+    status = "running",
+    endpoints = new {
+        health = "/api/health",
+        swagger = "/swagger",
+        api = "/api"
+    }
+}));
+
 // Health check endpoint
 app.MapGet("/api/health", () => Results.Ok(new { 
     status = "healthy", 
@@ -184,7 +200,33 @@ app.MapGet("/api/health", () => Results.Ok(new {
     version = "1.0.0"
 }));
 
-app.UseHttpsRedirection();
+// Database connectivity test endpoint
+app.MapGet("/api/health/db", async (ApplicationDbContext db) =>
+{
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync();
+        return Results.Ok(new { 
+            database = canConnect ? "connected" : "disconnected",
+            timestamp = DateTime.UtcNow
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(
+            detail: ex.Message,
+            statusCode: 503,
+            title: "Database connection failed"
+        );
+    }
+});
+
+// Only use HTTPS redirection in development (Render handles HTTPS at load balancer)
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
