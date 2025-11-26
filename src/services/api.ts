@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-// Base Axios instance - pointing to real backend
+// Base Axios instance - uses environment variable in production, localhost in development
+const getApiUrl = (): string => {
+  const env = (import.meta as any).env;
+  return env?.VITE_API_URL || 'http://localhost:5000/api';
+};
+
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Real backend URL
+  baseURL: getApiUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
