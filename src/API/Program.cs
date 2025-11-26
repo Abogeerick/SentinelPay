@@ -78,14 +78,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrEmpty(redisConnectionString))
 {
-    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
-        ConnectionMultiplexer.Connect(redisConnectionString));
-    builder.Services.AddScoped<IRedisService, RedisService>();
+    try
+    {
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            ConnectionMultiplexer.Connect(redisConnectionString));
+        builder.Services.AddScoped<IRedisService, RedisService>();
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Failed to connect to Redis. Using in-memory fallback.");
+        builder.Services.AddSingleton<IRedisService, InMemoryRedisService>();
+    }
 }
 else
 {
-    Log.Warning("Redis connection string not found. Redis features will be disabled.");
-    // You might want to create a mock Redis service for development
+    Log.Warning("Redis connection string not found. Using in-memory fallback.");
+    builder.Services.AddSingleton<IRedisService, InMemoryRedisService>();
 }
 
 // JWT Authentication

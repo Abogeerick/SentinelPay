@@ -1,5 +1,7 @@
+using System.Text.Json;
 using FalconPay.FraudShield.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FalconPay.FraudShield.Infrastructure.Data;
 
@@ -62,6 +64,13 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.IpAddress).HasMaxLength(45);
             entity.Property(e => e.DeviceId).HasMaxLength(255);
             entity.Property(e => e.RiskScore).HasDefaultValue(0);
+            var jsonOptions = new JsonSerializerOptions();
+            entity.Property(e => e.Metadata)
+                .HasColumnType("jsonb")
+                .HasConversion(
+                    new ValueConverter<Dictionary<string, object>?, string?>(
+                        v => v == null ? null : JsonSerializer.Serialize(v, jsonOptions),
+                        v => v == null ? null : JsonSerializer.Deserialize<Dictionary<string, object>>(v!, jsonOptions)));
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.WalletId);
             entity.HasIndex(e => e.Status);

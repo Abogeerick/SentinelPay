@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace FalconPay.FraudShield.Infrastructure.Services;

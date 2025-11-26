@@ -5,6 +5,7 @@ using FalconPay.FraudShield.Infrastructure.Data;
 using FalconPay.FraudShield.Infrastructure.Services;
 using FalconPay.FraudShield.Shared.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FalconPay.FraudShield.Application.Services;
 
