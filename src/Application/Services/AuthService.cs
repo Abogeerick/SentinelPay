@@ -1,4 +1,3 @@
-using AutoMapper;
 using FalconPay.FraudShield.Application.Interfaces;
 using FalconPay.FraudShield.Domain.Entities;
 using FalconPay.FraudShield.Infrastructure.Data;
@@ -15,7 +14,6 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IRedisService _redisService;
-    private readonly IMapper _mapper;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
@@ -23,14 +21,12 @@ public class AuthService : IAuthService
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         IRedisService redisService,
-        IMapper mapper,
         ILogger<AuthService> logger)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _redisService = redisService;
-        _mapper = mapper;
         _logger = logger;
     }
 
@@ -42,13 +38,17 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("User with this email already exists");
         }
 
-        // Create user
+        // Create user with name derived from email if not provided
+        var name = request.Name ?? request.Email.Split('@')[0];
+        
         var user = new User
         {
             Id = Guid.NewGuid(),
             Email = request.Email,
             PasswordHash = _passwordHasher.HashPassword(request.Password),
+            Name = name,
             Phone = request.Phone,
+            Avatar = $"https://api.dicebear.com/7.x/avataaars/svg?seed={request.Email}",
             LastLoginIp = ipAddress,
             DeviceFingerprint = deviceFingerprint,
             CreatedAt = DateTime.UtcNow,
@@ -57,12 +57,12 @@ public class AuthService : IAuthService
 
         _context.Users.Add(user);
 
-        // Create default wallet
+        // Create default wallet with initial balance for testing
         var wallet = new Wallet
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            Balance = 0,
+            Balance = 10000m, // Starting balance for testing
             Currency = "KES",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -81,10 +81,10 @@ public class AuthService : IAuthService
 
         return new AuthResponse
         {
-            AccessToken = accessToken,
+            Token = accessToken,
             RefreshToken = refreshToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(60),
-            User = _mapper.Map<UserDto>(user)
+            User = MapToUserDto(user)
         };
     }
 
@@ -112,10 +112,10 @@ public class AuthService : IAuthService
 
         return new AuthResponse
         {
-            AccessToken = accessToken,
+            Token = accessToken,
             RefreshToken = refreshToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(60),
-            User = _mapper.Map<UserDto>(user)
+            User = MapToUserDto(user)
         };
     }
 
@@ -143,11 +143,22 @@ public class AuthService : IAuthService
 
         return new AuthResponse
         {
-            AccessToken = accessToken,
+            Token = accessToken,
             RefreshToken = refreshToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(60),
-            User = _mapper.Map<UserDto>(user)
+            User = MapToUserDto(user)
+        };
+    }
+
+    private static UserDto MapToUserDto(User user)
+    {
+        return new UserDto
+        {
+            Id = user.Id.ToString(),
+            Name = user.Name ?? user.Email.Split('@')[0],
+            Email = user.Email,
+            Avatar = user.Avatar ?? $"https://api.dicebear.com/7.x/avataaars/svg?seed={user.Email}",
+            Phone = user.Phone
         };
     }
 }
-
