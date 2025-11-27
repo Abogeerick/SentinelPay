@@ -19,11 +19,11 @@ const AppLayout: React.FC = () => {
   };
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
-    { icon: Wallet, label: 'Wallet', to: '/wallet' },
-    { icon: ArrowRightLeft, label: 'Payments', to: '/payments' },
-    { icon: ShieldAlert, label: 'Fraud', to: '/fraud' },
-    { icon: Settings, label: 'Settings', to: '/settings' },
+    { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard' },
+    { icon: Wallet, label: 'Wallet', to: '/dashboard/wallet' },
+    { icon: ArrowRightLeft, label: 'Payments', to: '/dashboard/payments' },
+    { icon: ShieldAlert, label: 'Fraud', to: '/dashboard/fraud' },
+    { icon: Settings, label: 'Settings', to: '/dashboard/settings' },
   ];
 
   return (

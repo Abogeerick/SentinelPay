@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import Button from '../components/Button';
-import { ShieldAlert, UserPlus } from 'lucide-react';
+import { Shield, UserPlus, ArrowRight, Sparkles } from 'lucide-react';
 
 const Login: React.FC = () => {
   const { loginWithCredentials, register, isLoading } = useAuthStore();
@@ -12,13 +11,20 @@ const Login: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
       await loginWithCredentials(email, password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     }
@@ -29,85 +35,151 @@ const Login: React.FC = () => {
     setError('');
     try {
       await register(email, password, name);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors duration-300 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-fintech-400/20 rounded-full blur-[100px] animate-pulse-slow"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-400/20 rounded-full blur-[100px] animate-pulse-slow [animation-delay:1s]"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white overflow-hidden relative">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse-slow"
+          style={{ transform: `translate(${scrollY * 0.1}px, ${scrollY * 0.1}px)` }}
+        />
+        <div 
+          className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-r from-cyan-600/20 via-blue-600/20 to-indigo-600/20 rounded-full blur-3xl animate-pulse-slow"
+          style={{ transform: `translate(${-scrollY * 0.1}px, ${-scrollY * 0.1}px)` }}
+        />
+      </div>
 
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl dark:shadow-fintech-900/20 w-full max-w-md border border-slate-200 dark:border-slate-800 animate-slide-up z-10">
-        <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-fintech-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-fintech-600/40">
-                {isRegistering ? <UserPlus className="text-white w-9 h-9" /> : <ShieldAlert className="text-white w-9 h-9" />}
+      {/* Navigation */}
+      <nav className="relative z-50 px-6 py-4 backdrop-blur-md bg-white/5 border-b border-white/10">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Shield className="w-6 h-6" />
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-              {isRegistering ? 'Create Account' : 'Welcome Back'}
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-2">
-              {isRegistering ? 'Sign up for SentinelPay' : 'Sign in to your SentinelPay dashboard'}
-            </p>
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              SentinelPay
+            </span>
+          </Link>
         </div>
+      </nav>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
-            {error}
-          </div>
-        )}
+      <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 shadow-2xl animate-slide-up">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-purple-500/50">
+                {isRegistering ? (
+                  <UserPlus className="text-white w-10 h-10" />
+                ) : (
+                  <Shield className="text-white w-10 h-10" />
+                )}
+              </div>
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                {isRegistering ? 'Create Account' : 'Welcome Back'}
+              </h1>
+              <p className="text-gray-400 text-center">
+                {isRegistering 
+                  ? 'Sign up to start using SentinelPay' 
+                  : 'Sign in to your SentinelPay dashboard'}
+              </p>
+            </div>
 
-        <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-5">
-            {isRegistering && (
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Full Name</label>
-                <input 
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm backdrop-blur-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-5">
+              {isRegistering && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-300 ml-1">Full Name</label>
+                  <input 
                     type="text" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-fintech-500 focus:border-transparent focus:outline-none transition-all dark:text-white"
+                    required
+                    className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500/50 focus:outline-none transition-all text-white placeholder-gray-500"
+                  />
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300 ml-1">Email</label>
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="demo@sentinelpay.io"
+                  required
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500/50 focus:outline-none transition-all text-white placeholder-gray-500"
                 />
               </div>
-            )}
-            <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Email</label>
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300 ml-1">Password</label>
                 <input 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-fintech-500 focus:border-transparent focus:outline-none transition-all dark:text-white"
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500/50 focus:outline-none transition-all text-white placeholder-gray-500"
                 />
-            </div>
-            <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">Password</label>
-                <input 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-fintech-500 focus:border-transparent focus:outline-none transition-all dark:text-white"
-                />
-            </div>
-            
-            <Button type="submit" className="w-full py-3.5 text-base shadow-lg shadow-fintech-600/20" isLoading={isLoading}>
-                {isRegistering ? 'Create Account' : 'Sign In'}
-            </Button>
-        </form>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-[1.02] shadow-lg shadow-purple-500/50 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>{isRegistering ? 'Create Account' : 'Sign In'}</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+            </form>
 
-        <div className="mt-6 text-center">
-          <button 
-            onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
-            className="text-sm text-fintech-600 dark:text-fintech-400 hover:underline"
-          >
-            {isRegistering ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-          </button>
-        </div>
+            {/* Toggle Register/Login */}
+            <div className="mt-6 text-center">
+              <button 
+                onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                {isRegistering ? (
+                  <>Already have an account? <span className="text-purple-400 font-medium">Sign In</span></>
+                ) : (
+                  <>Don't have an account? <span className="text-purple-400 font-medium">Sign Up</span></>
+                )}
+              </button>
+            </div>
 
-        <div className="mt-6 text-center text-sm text-slate-400">
-            <p>Demo: Use demo@sentinelpay.io / password123</p>
+            {/* Demo Credentials */}
+            <div className="mt-6 p-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl">
+              <div className="flex items-center justify-center space-x-2 text-sm text-gray-400 mb-2">
+                <Sparkles className="w-4 h-4 text-yellow-400" />
+                <span className="font-medium">Demo Account</span>
+              </div>
+              <div className="text-xs text-center text-gray-500 space-y-1">
+                <p>Email: demo@sentinelpay.io</p>
+                <p>Password: password123</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

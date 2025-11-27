@@ -8,6 +8,7 @@ import Payments from './pages/Payments';
 import Fraud from './pages/Fraud';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -22,9 +23,11 @@ const App: React.FC = () => {
   return (
     <HashRouter>
       <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         
-        <Route path="/" element={
+        <Route path="/dashboard" element={
           <ProtectedRoute>
             <AppLayout />
           </ProtectedRoute>
