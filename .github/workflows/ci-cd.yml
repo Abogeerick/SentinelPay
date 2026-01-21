@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Permissions needed for security scanning and code analysis
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 env:
   DOTNET_VERSION: '8.0.x'
   NODE_VERSION: '20.x'
