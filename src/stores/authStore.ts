@@ -3,15 +3,20 @@ import api from '../services/api';
 import { AuthState } from '../types';
 
 interface ExtendedAuthState extends AuthState {
-  register: (email: string, password: string, name?: string) => Promise<void>;
-  loginWithCredentials: (email: string, password: string) => Promise<void>;
+  error: string | null;
+  register: (email: string, password: string, name?: string) => Promise<boolean>;
+  loginWithCredentials: (email: string, password: string) => Promise<boolean>;
   checkAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
-export const useAuthStore = create<ExtendedAuthState>((set) => ({
+export const useAuthStore = create<ExtendedAuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  error: null,
+
+  clearError: () => set({ error: null }),
 
   // Check if user is already authenticated (on app load)
   checkAuth: async () => {
@@ -34,16 +39,22 @@ export const useAuthStore = create<ExtendedAuthState>((set) => ({
 
   // Demo login (uses default credentials)
   login: async () => {
-    set({ isLoading: true });
+    // Prevent duplicate requests if already loading
+    if (get().isLoading) {
+      console.warn('Login already in progress');
+      return;
+    }
+
+    set({ isLoading: true, error: null });
     try {
       // Try to login with demo credentials, or register if not exists
       try {
-        const res = await api.post('/auth/login', { 
-          email: 'demo@sentinelpay.io', 
-          password: 'password123' 
+        const res = await api.post('/auth/login', {
+          email: 'demo@sentinelpay.io',
+          password: 'password123'
         });
         localStorage.setItem('sentinel_token', res.data.token);
-        set({ user: res.data.user, isAuthenticated: true, isLoading: false });
+        set({ user: res.data.user, isAuthenticated: true, isLoading: false, error: null });
       } catch (loginError: any) {
         // If login fails, try to register
         if (loginError.response?.status === 401) {
@@ -53,47 +64,64 @@ export const useAuthStore = create<ExtendedAuthState>((set) => ({
             name: 'Alex Sentinel'
           });
           localStorage.setItem('sentinel_token', res.data.token);
-          set({ user: res.data.user, isAuthenticated: true, isLoading: false });
+          set({ user: res.data.user, isAuthenticated: true, isLoading: false, error: null });
         } else {
           throw loginError;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed", error);
-      set({ isLoading: false });
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+      set({ isLoading: false, error: errorMessage });
     }
   },
 
   // Login with specific credentials
-  loginWithCredentials: async (email: string, password: string) => {
-    set({ isLoading: true });
+  loginWithCredentials: async (email: string, password: string): Promise<boolean> => {
+    // Prevent duplicate requests if already loading
+    if (get().isLoading) {
+      console.warn('Login already in progress');
+      return false;
+    }
+
+    set({ isLoading: true, error: null });
     try {
       const res = await api.post('/auth/login', { email, password });
       localStorage.setItem('sentinel_token', res.data.token);
-      set({ user: res.data.user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
+      set({ user: res.data.user, isAuthenticated: true, isLoading: false, error: null });
+      return true; // Return success
+    } catch (error: any) {
       console.error("Login failed", error);
-      set({ isLoading: false });
-      throw error;
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed. Please check your credentials.';
+      set({ isLoading: false, error: errorMessage, isAuthenticated: false, user: null });
+      return false; // Return failure
     }
   },
 
   // Register new user
-  register: async (email: string, password: string, name?: string) => {
-    set({ isLoading: true });
+  register: async (email: string, password: string, name?: string): Promise<boolean> => {
+    // Prevent duplicate requests if already loading
+    if (get().isLoading) {
+      console.warn('Registration already in progress');
+      return false;
+    }
+
+    set({ isLoading: true, error: null });
     try {
       const res = await api.post('/auth/register', { email, password, name });
       localStorage.setItem('sentinel_token', res.data.token);
-      set({ user: res.data.user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
+      set({ user: res.data.user, isAuthenticated: true, isLoading: false, error: null });
+      return true;
+    } catch (error: any) {
       console.error("Registration failed", error);
-      set({ isLoading: false });
-      throw error;
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+      set({ isLoading: false, error: errorMessage });
+      return false;
     }
   },
 
   logout: () => {
     localStorage.removeItem('sentinel_token');
-    set({ user: null, isAuthenticated: false });
+    set({ user: null, isAuthenticated: false, error: null });
   },
 }));

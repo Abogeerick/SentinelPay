@@ -44,8 +44,10 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: string | null;
   login: () => Promise<void>;
   logout: () => void;
+  clearError: () => void;
 }
 
 export interface WalletState {
