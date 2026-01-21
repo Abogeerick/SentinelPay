@@ -192,10 +192,16 @@ jobs:
     
     steps:
       - name: Deploy to Render (Staging)
-        if: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK != '' }}
+        continue-on-error: true
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}
         run: |
-          curl -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
-          echo "Deployed to staging environment"
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "⚠️ RENDER_STAGING_DEPLOY_HOOK not configured. Skipping deployment."
+            exit 0
+          fi
+          curl -X POST "$DEPLOY_HOOK"
+          echo "✅ Deployed to staging environment"
 
   # ===========================================
   # Deploy to Production
@@ -211,14 +217,21 @@ jobs:
     
     steps:
       - name: Deploy to Render (Production)
-        if: ${{ secrets.RENDER_PROD_DEPLOY_HOOK != '' }}
+        continue-on-error: true
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_PROD_DEPLOY_HOOK }}
         run: |
-          curl -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}"
-          echo "Deployed to production environment"
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "⚠️ RENDER_PROD_DEPLOY_HOOK not configured. Skipping deployment."
+            exit 0
+          fi
+          curl -X POST "$DEPLOY_HOOK"
+          echo "✅ Deployed to production environment"
 
       - name: Notify deployment success
         uses: slackapi/slack-github-action@v1.24.0
         if: success()
+        continue-on-error: true
         with:
           payload: |
             {
